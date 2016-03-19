@@ -1,0 +1,25 @@
+
+- service: maybe_pull
+  tag: ^$
+  command: tianon/true
+
+
+- type: serial
+  tag: ^[^_]
+  service: maybe_pull
+  encrypted_dockercfg_path: dockercfg.encrypted
+  steps:
+    - type: push
+      tag: master
+      registry: &REGISTRY https://index.docker.io/v1/
+      image_name:  &MAYBEPULLIMG cjengineering/ci-maybe-pull
+      image_tag: latest
+    - type: push
+      tag: master
+      registry: *REGISTRY
+      image_name: *MAYBEPULLIMG
+      image_tag: "commit-{{.CommitID}}"
+    - type: push
+      registry: *REGISTRY
+      image_name: *MAYBEPULLIMG
+      image_tag: "branch-{{.Branch}}"
