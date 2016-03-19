@@ -1,25 +1,47 @@
 
-- service: maybe_pull
+- type: serial
   tag: ^$
-  command: tianon/true
-
+  steps:
+    - service: maybe_pull
+      command: tianon/true
+    - service: warm_cache
+      command: tianon/true
 
 - type: serial
   tag: ^[^_]
-  service: maybe_pull
   encrypted_dockercfg_path: dockercfg.encrypted
   steps:
-    - type: push
-      tag: master
-      registry: &REGISTRY https://index.docker.io/v1/
-      image_name:  &MAYBEPULLIMG cjengineering/ci-maybe-pull
-      image_tag: latest
-    - type: push
-      tag: master
-      registry: *REGISTRY
-      image_name: *MAYBEPULLIMG
-      image_tag: "commit-{{.CommitID}}"
-    - type: push
-      registry: *REGISTRY
-      image_name: *MAYBEPULLIMG
-      image_tag: "branch-{{.Branch}}"
+    - type: serial
+      service: maybe_pull
+      steps:
+        - type: push
+          tag: master
+          registry: &REGISTRY https://index.docker.io/v1/
+          image_name:  &MAYBEPULLIMG cjengineering/ci-maybe-pull
+          image_tag: latest
+        - type: push
+          tag: master
+          registry: *REGISTRY
+          image_name: *MAYBEPULLIMG
+          image_tag: "commit-{{.CommitID}}"
+        - type: push
+          registry: *REGISTRY
+          image_name: *MAYBEPULLIMG
+          image_tag: "branch-{{.Branch}}"
+    - type: serial
+      service: warm_cache
+      steps:
+        - type: push
+          tag: master
+          registry: &REGISTRY https://index.docker.io/v1/
+          image_name:  &WARMCACHEIMG cjengineering/codeship-warm-cache
+          image_tag: latest
+        - type: push
+          tag: master
+          registry: *REGISTRY
+          image_name: *WARMCACHEIMG
+          image_tag: "commit-{{.CommitID}}"
+        - type: push
+          registry: *REGISTRY
+          image_name: *WARMCACHEIMG
+          image_tag: "branch-{{.Branch}}"
